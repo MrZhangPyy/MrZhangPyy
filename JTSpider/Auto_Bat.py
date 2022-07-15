@@ -1,3 +1,5 @@
+import copy
+
 import requests
 import pandas as pd
 from tqdm import tqdm
@@ -9,7 +11,7 @@ import numpy as np
 *Headers generator;
 '''
 def headers_generator(routename):
-    authtoken = '5f796921041c48dfbc1afc713416b3e8'
+    authtoken = 'a80863fcd74c4768ab3d51949aa2ed43'
     global headers
     headers = {
         'authority': 'jmsgw.jtexpress.com.cn',
@@ -43,37 +45,32 @@ def get_time_now():
     print(startDates, endDates)
     return startDates,endDates
 
-def if_in(value):
-    return value in packageNum_list
-
 '''
 *Package number checker and filter;
 '''
 def packageNum_check(packageNum_list):
     routename = 'electronicPackagePrinting'
-    main(routename)
+    headers_generator(routename)
     data = {"current":1,"size":20,"startCreateTime":"2022-07-15 00:00:00","endCreateTime":"2022-07-15 23:59:59",
      "createNetworkCode":"0711002","packageNumberList":packageNum_list,"countryId":"1"}
     response = requests.post('https://jmsgw.jtexpress.com.cn/customerother/electronicpackagelist/page',
                              headers=headers,json=data).json()
     response = response['data']['records']
     for dic in response:
-        if dic.get('createNetworkCode') == "502701B1" or dic.get('createNetworkCode') == "502701":
+        if dic.get('packageCode') == "501" and (dic.get('createNetworkCode') == "502701B1" or dic.get('createNetworkCode') == "502701"):
             pass
         else:packageNum_list.remove(dic.get('packageNumber'))
     return packageNum_list
-
-
 
 '''
 *Constuct bill code pool from system to be further handling;
 '''
 def yfwd(startDates,endDates):
     routename = 'newArriveMonitor'
-    main(routename)
+    headers_generator(routename)
     temp_dic = {}
-    global packageNum_list,waybillNo_Pool
     packageNum_list = []
+    global waybillNo_Pool
     waybillNo_Pool = []
     pre_data = {"current":1,"size":1000,"startDates":startDates,"endDates":endDates,"siteCode":"0711002",
                 "exportType":6,"type":6,"countryId":"1"}
@@ -83,21 +80,35 @@ def yfwd(startDates,endDates):
     for pages in range(1, max_pages):
         data = {"current":pages,"size":1000,"startDates":startDates,"endDates":endDates,"siteCode":"0711002",
                 "exportType":6,"type":6,"countryId":"1"}
-        response = requests.post('https://jmsgw.jtexpress.com.cn/bigdataoperatingplatform/arriveMonitor/listDetail',
+        response1 = requests.post('https://jmsgw.jtexpress.com.cn/bigdataoperatingplatform/arriveMonitor/listDetail',
                                  headers=headers, json=data).json()
-        response = response['data']['records']
-        for dic in tqdm(response):
-            if dic.get('packageNumber') is None:
+        response1 = response1['data']['records']
+        for dic1 in tqdm(response1):
+            if dic1.get('packageNumber') is None:
                 pass
-            elif dic.get('packageNumber')[0] == "B":
-                temp_dic['运单号'] = dic.get('billCode')
-                temp_dic['包号'] = dic.get('packageNumber')
-                packageNum_list.append(dic.get('packageNumber'))
-                waybillNo_Pool.append(temp_dic)
+            elif dic1.get('packageNumber')[0] == "B":
+                temp_dic['运单号'] = dic1.get('billCode')
+                temp_dic['包号'] = dic1.get('packageNumber')
+                waybillNo_Pool.append(copy.deepcopy(temp_dic))
+                if dic1.get('packageNumber') in packageNum_list:
+                    pass
+                else:packageNum_list.append(dic1.get('packageNumber'))
+    print(waybillNo_Pool)
+    print(packageNum_list)
     waybillNo_Pool = pd.DataFrame(waybillNo_Pool)
-    packageNum_check(packageNum_list)
-    s = waybillNo_Pool["包号"].map(if_in)
-    waybillNo_Pool.iloc[s]
+    routename = 'electronicPackagePrinting'
+    headers_generator(routename)
+    data = {"current": 1, "size": 20, "startCreateTime": "2022-07-15 00:00:00", "endCreateTime": "2022-07-15 23:59:59",
+            "createNetworkCode": "0711002", "packageNumberList": packageNum_list, "countryId": "1"}
+    response2 = requests.post('https://jmsgw.jtexpress.com.cn/customerother/electronicpackagelist/page',
+                             headers=headers, json=data).json()
+    response2 = response2['data']['records']
+    for dic2 in response2:
+        if dic2.get('packageCode') == "501" and (dic2.get('createNetworkCode') == "502701B1" or dic2.get('createNetworkCode') == "502701"):
+            pass
+        else:packageNum_list.remove(dic2.get('packageNumber'))
+    print(packageNum_list)
+    waybillNo_Pool[waybillNo_Pool["包号"].isin(packageNum_list)]
     return waybillNo_Pool
 
 '''
@@ -105,7 +116,7 @@ def yfwd(startDates,endDates):
 '''
 def data_wash(waybillNoPool):
     routename = 'scanQueryConstantlyNew'
-    main(routename)
+    headers_generator(routename)
     count = (len(waybillNoPool) - 1) // 200 + 1
     billNoFinal = pd.DataFrame()
     for i in range(count):
@@ -147,9 +158,10 @@ def send_Requests():
 if __name__ == '__main__':
     while True:
         # get_time_now()
-        startDates = "2022-07-15 10:28:00"
-        endDates = "2022-07-15 10:29:00"
+        startDates = "2022-07-15 22:31:54"
+        endDates = "2022-07-15 22:31:56"
         yfwd(startDates,endDates)
+        # print(waybillNo_Pool)
         # data_wash(waybillNoPool)
         print(">>>>>>Waiting Now!<<<<<<")
         time.sleep(12000)
