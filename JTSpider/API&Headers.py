@@ -1,4 +1,4 @@
-authtoken = 'a429fc63d77c4ddca373819b989fc6cf'
+authtoken = ''
 headers = {
         'authority': 'jmsgw.jtexpress.com.cn',
         'accept': 'application/json, text/plain, */*',
