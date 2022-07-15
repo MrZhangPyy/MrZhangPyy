@@ -1,10 +1,10 @@
-import copy
 import requests
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 import time
 from datetime import datetime
-import numpy as np
+import copy
 
 '''
 *Headers generator;
@@ -45,18 +45,22 @@ def time_module(i):
 *Package number checker and filter;(Temporary abandoned.)
 '''
 def packageNum_check(packageNum_list):
-    routename = 'electronicPackagePrinting'
-    headers_generator(routename)
-    data = {"current":1,"size":1000,"startCreateTime":"2022-07-15 00:00:00","endCreateTime":"2022-07-15 23:59:59",
-     "createNetworkCode":"0711002","packageNumberList":packageNum_list,"countryId":"1"}
-    response = requests.post('https://jmsgw.jtexpress.com.cn/customerother/electronicpackagelist/page',
-                             headers=headers,json=data).json()
-    response = response['data']['records']
-    for dic in response:
-        if dic.get('packageCode') == "501" and dic.get('createNetworkCode') in ["502701B1","502701"]:
-            pass
-        else:packageNum_list.remove(dic.get('packageNumber'))
-    return packageNum_list
+    global waybillNo_Pool
+    if len(packageNum_list) > 0:
+        routename = 'electronicPackagePrinting'
+        headers_generator(routename)
+        data = {"current":1,"size":1000,"startCreateTime":"2022-07-15 00:00:00","endCreateTime":"2022-07-15 23:59:59",
+         "createNetworkCode":"0711002","packageNumberList":packageNum_list,"countryId":"1"}
+        response = requests.post('https://jmsgw.jtexpress.com.cn/customerother/electronicpackagelist/page',
+                                 headers=headers,json=data).json()
+        response = response['data']['records']
+        for dic in response:
+            if dic.get('packageCode') == "501" and dic.get('createNetworkCode') in ["502701B1","502701"]:
+                pass
+            else:packageNum_list.remove(dic.get('packageNumber'))
+        waybillNo_Pool = waybillNo_Pool[waybillNo_Pool["包号"].isin(packageNum_list)]
+    else:pass
+    return waybillNo_Pool
 
 '''
 *Constuct bill code pool from system to be further handling;
@@ -66,7 +70,7 @@ def not_actually_arrived(startDates,endDates):
     headers_generator(routename)
     temp_dic = {}
     packageNum_list = []
-    global waybillNo_Pool
+    global waybillNo_Pool,waybillNo_List
     waybillNo_Pool = []
     pre_data = {"current":1,"size":1000,"startDates":startDates,"endDates":endDates,"siteCode":"0711002",
                 "exportType":6,"type":6,"countryId":"1"}
@@ -89,14 +93,10 @@ def not_actually_arrived(startDates,endDates):
                 if dic.get('packageNumber') in packageNum_list:
                     pass
                 else:packageNum_list.append(dic.get('packageNumber'))
-    print(waybillNo_Pool)
-    print(packageNum_list)
     waybillNo_Pool = pd.DataFrame(waybillNo_Pool)
     packageNum_check(packageNum_list)
-    print(packageNum_list)
-    waybillNo_Pool = waybillNo_Pool[waybillNo_Pool["包号"].isin(packageNum_list)]
-    print(waybillNo_Pool)
-    return waybillNo_Pool
+    waybillNo_List = waybillNo_Pool['运单号'].tolist()
+    return waybillNo_List
 
 '''
 *Data wash and save to xlsx file;
@@ -145,9 +145,11 @@ def send_Requests():
 if __name__ == '__main__':
     stamp = int(time.time()) - 6900
     while True:
-        startDates = time_module(stamp)
-        endDates = time_module(stamp + 600)
+        startDates = "2022-07-16 00:50:00"
+        endDates = "2022-07-16 01:00:00"
+        # startDates = time_module(stamp)
+        # endDates = time_module(stamp + 1200)
         not_actually_arrived(startDates,endDates)
-        stamp += 601
-        print("-"*50)
-        time.sleep(600)
+        stamp += 1201
+        print("-"*100)
+        time.sleep(1200)
