@@ -142,7 +142,7 @@ def data_wash(waybillNo_List):
     billNoFinal.insert(billNoFinal.shape[1], '问题件原因', "此件为包内件，路由显示发往我司，但实际并未到达！")
     billNoFinal.to_excel("TEST.xlsx", index=False)
     print("-" * 45, "Finished!", "-" * 44)
-    return billNoFinal
+    return
 
 '''
 *Send xlsx file via requests.post to server.
