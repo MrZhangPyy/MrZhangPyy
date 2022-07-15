@@ -101,26 +101,26 @@ def not_actually_arrived(startDates,endDates):
 '''
 *Data wash and save to xlsx file;
 '''
-def data_wash(waybillNoPool):
+def data_wash(waybillNo_List):
     routename = 'scanQueryConstantlyNew'
     headers_generator(routename)
-    count = (len(waybillNoPool) - 1) // 200 + 1
+    count = (len(waybillNo_List) - 1) // 200 + 1
     billNoFinal = pd.DataFrame()
     for i in range(count):
         ifrom = i * 200
         ito = ifrom + 200
         pre_data = {"current": 1, "size": 1000, "startDates": "2022-07-13 00:00:00", "endDates": "2022-07-13 23:59:59",
-                    "scanType": "全部", "sortName": "scanDate", "sortOrder": "desc", "bilNos": waybillNoPool[ifrom:ito],
+                    "scanType": "全部", "sortName": "scanDate", "sortOrder": "desc", "bilNos": waybillNo_List[ifrom:ito],
                     "queryTerminalDispatchCode": 0, "querySub": "", "reachAddressCodeList": [], "sendSites": [],
                     "billType": 1, "countryId": "1"}
         pre_req = requests.post('https://jmsgw.jtexpress.com.cn/bigdataoperatingplatform/scanRecordQuery/listPage',
                                 headers=headers, json=pre_data).json()
-        max_pages = pre_req["data"]["pages"]
+        max_pages = pre_req["data"]["pages"] + 1
         billNoSum = pd.DataFrame()
         for pages in range(1, max_pages):
             data = {"current": pages, "size": 1000, "startDates": "2022-07-13 00:00:00",
                     "endDates": "2022-07-13 23:59:59", "scanType": "全部", "sortName": "scanDate", "sortOrder": "desc",
-                    "bilNos": waybillNoPool[ifrom:ito], "queryTerminalDispatchCode": 0, "querySub": "",
+                    "bilNos": waybillNo_List[ifrom:ito], "queryTerminalDispatchCode": 0, "querySub": "",
                     "reachAddressCodeList": [], "sendSites": [], "billType": 1, "countryId": "1"}
             response = requests.post('https://jmsgw.jtexpress.com.cn/bigdataoperatingplatform/scanRecordQuery/listPage',
                                      headers=headers, json=data).json()
@@ -129,8 +129,7 @@ def data_wash(waybillNoPool):
             billNoTemp.dropna(subset=['belongNo'], inplace=True)
             billNoSum = pd.concat([billNoSum, billNoTemp])
         billNoFinal = pd.concat([billNoFinal, billNoSum])
-    billNoFinal['scanDate'] = pd.to_datetime(df.scanDate)
-    billNoFinal.sort_values('scanDate', ascending = False, inplace = True)
+    #
     print(billNoFinal)
     billNoFinal.to_excel("TEST.xlsx", index=False)
     print(">>>>>>Finished!<<<<<<")
@@ -145,11 +144,13 @@ def send_Requests():
 if __name__ == '__main__':
     stamp = int(time.time()) - 6900
     while True:
-        startDates = "2022-07-16 00:50:00"
-        endDates = "2022-07-16 01:00:00"
-        # startDates = time_module(stamp)
-        # endDates = time_module(stamp + 1200)
+        # startDates = "2022-07-16 00:50:00"
+        # endDates = "2022-07-16 00:55:00"
+        startDates = time_module(stamp)
+        endDates = time_module(stamp + 1200)
+        # print(startDates,"\n",endDates)
         not_actually_arrived(startDates,endDates)
         stamp += 1201
+        data_wash(waybillNo_List)
         print("-"*100)
         time.sleep(1200)
