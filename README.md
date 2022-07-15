@@ -1,5 +1,5 @@
 - 👋 Hi, I’m @MrZhangPyy
-- 🚍 I'm currently working as a data & info assayer in J&T Express
+- 🚍 I'm currently working as a data & infomation assayer in J&T Express China
 - 👀 I’m interested in WebCrawler
 - 🌱 I’m currently learning Python
 - 📫 How to reach me: WeChat:lovezj1105 QQ:444072666
