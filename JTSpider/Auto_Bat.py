@@ -8,7 +8,7 @@ import numpy as np
 '''
 *Headers generator;
 '''
-def Headers_Generator(routename):
+def headers_generator(routename):
     authtoken = '5f796921041c48dfbc1afc713416b3e8'
     global headers
     headers = {
@@ -43,6 +43,9 @@ def get_time_now():
     print(startDates, endDates)
     return startDates,endDates
 
+def if_in(value):
+    return value in packageNum_list
+
 '''
 *Package number checker and filter;
 '''
@@ -60,6 +63,8 @@ def packageNum_check(packageNum_list):
         else:packageNum_list.remove(dic.get('packageNumber'))
     return packageNum_list
 
+
+
 '''
 *Constuct bill code pool from system to be further handling;
 '''
@@ -67,9 +72,9 @@ def yfwd(startDates,endDates):
     routename = 'newArriveMonitor'
     main(routename)
     temp_dic = {}
-    global packageNum_list,waybillNoPool
+    global packageNum_list,waybillNo_Pool
     packageNum_list = []
-    waybillNo_list = []
+    waybillNo_Pool = []
     pre_data = {"current":1,"size":1000,"startDates":startDates,"endDates":endDates,"siteCode":"0711002",
                 "exportType":6,"type":6,"countryId":"1"}
     first_req = requests.post('https://jmsgw.jtexpress.com.cn/bigdataoperatingplatform/arriveMonitor/listDetail',
@@ -88,14 +93,12 @@ def yfwd(startDates,endDates):
                 temp_dic['运单号'] = dic.get('billCode')
                 temp_dic['包号'] = dic.get('packageNumber')
                 packageNum_list.append(dic.get('packageNumber'))
-                waybillNo_list.append(temp_dic)
+                waybillNo_Pool.append(temp_dic)
+    waybillNo_Pool = pd.DataFrame(waybillNo_Pool)
     packageNum_check(packageNum_list)
-
-
-
-
-
-    return waybillNo_list
+    s = waybillNo_Pool["包号"].map(if_in)
+    waybillNo_Pool.iloc[s]
+    return waybillNo_Pool
 
 '''
 *Data wash and save to xlsx file;
@@ -144,9 +147,9 @@ def send_Requests():
 if __name__ == '__main__':
     while True:
         # get_time_now()
-        startDates = "2022-07-15 21:00:00"
-        endDates = "2022-07-21 21:10:00"
+        startDates = "2022-07-15 10:28:00"
+        endDates = "2022-07-15 10:29:00"
         yfwd(startDates,endDates)
         # data_wash(waybillNoPool)
-        print(">>>>>>Waiting!<<<<<<")
+        print(">>>>>>Waiting Now!<<<<<<")
         time.sleep(12000)
