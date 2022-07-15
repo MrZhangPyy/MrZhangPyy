@@ -1,5 +1,4 @@
 import copy
-
 import requests
 import pandas as pd
 from tqdm import tqdm
@@ -37,21 +36,18 @@ def headers_generator(routename):
 '''
 *Time module;
 '''
-def get_time_now():
-    global startDates,endDates
-    time_now_stamp = int(time.time())
-    startDates = str(datetime.fromtimestamp(time_now_stamp - 9600))
-    endDates = str(datetime.fromtimestamp(time_now_stamp - 8400))
-    print(startDates, endDates)
-    return startDates,endDates
+def time_module(i):
+    global Dates
+    Dates = str(datetime.fromtimestamp(i))
+    return Dates
 
 '''
-*Package number checker and filter;
+*Package number checker and filter;(Temporary abandoned.)
 '''
 def packageNum_check(packageNum_list):
     routename = 'electronicPackagePrinting'
     headers_generator(routename)
-    data = {"current":1,"size":20,"startCreateTime":"2022-07-15 00:00:00","endCreateTime":"2022-07-15 23:59:59",
+    data = {"current":1,"size":100,"startCreateTime":"2022-07-15 00:00:00","endCreateTime":"2022-07-15 23:59:59",
      "createNetworkCode":"0711002","packageNumberList":packageNum_list,"countryId":"1"}
     response = requests.post('https://jmsgw.jtexpress.com.cn/customerother/electronicpackagelist/page',
                              headers=headers,json=data).json()
@@ -65,7 +61,7 @@ def packageNum_check(packageNum_list):
 '''
 *Constuct bill code pool from system to be further handling;
 '''
-def yfwd(startDates,endDates):
+def not_actually_arrived(startDates,endDates):
     routename = 'newArriveMonitor'
     headers_generator(routename)
     temp_dic = {}
@@ -80,35 +76,21 @@ def yfwd(startDates,endDates):
     for pages in range(1, max_pages):
         data = {"current":pages,"size":1000,"startDates":startDates,"endDates":endDates,"siteCode":"0711002",
                 "exportType":6,"type":6,"countryId":"1"}
-        response1 = requests.post('https://jmsgw.jtexpress.com.cn/bigdataoperatingplatform/arriveMonitor/listDetail',
+        response = requests.post('https://jmsgw.jtexpress.com.cn/bigdataoperatingplatform/arriveMonitor/listDetail',
                                  headers=headers, json=data).json()
-        response1 = response1['data']['records']
-        for dic1 in tqdm(response1):
-            if dic1.get('packageNumber') is None:
+        response = response['data']['records']
+        for dic in tqdm(response):
+            if dic.get('packageNumber') is None:
+                break
+            temp_dic['运单号'] = dic.get('billCode')
+            temp_dic['包号'] = dic.get('packageNumber')
+            waybillNo_Pool.append(copy.deepcopy(temp_dic))
+            if dic.get('packageNumber') in packageNum_list:
                 pass
-            elif dic1.get('packageNumber')[0] == "B":
-                temp_dic['运单号'] = dic1.get('billCode')
-                temp_dic['包号'] = dic1.get('packageNumber')
-                waybillNo_Pool.append(copy.deepcopy(temp_dic))
-                if dic1.get('packageNumber') in packageNum_list:
-                    pass
-                else:packageNum_list.append(dic1.get('packageNumber'))
-    print(waybillNo_Pool)
-    print(packageNum_list)
+            else:packageNum_list.append(dic.get('packageNumber'))
     waybillNo_Pool = pd.DataFrame(waybillNo_Pool)
-    routename = 'electronicPackagePrinting'
-    headers_generator(routename)
-    data = {"current": 1, "size": 20, "startCreateTime": "2022-07-15 00:00:00", "endCreateTime": "2022-07-15 23:59:59",
-            "createNetworkCode": "0711002", "packageNumberList": packageNum_list, "countryId": "1"}
-    response2 = requests.post('https://jmsgw.jtexpress.com.cn/customerother/electronicpackagelist/page',
-                             headers=headers, json=data).json()
-    response2 = response2['data']['records']
-    for dic2 in response2:
-        if dic2.get('packageCode') == "501" and (dic2.get('createNetworkCode') == "502701B1" or dic2.get('createNetworkCode') == "502701"):
-            pass
-        else:packageNum_list.remove(dic2.get('packageNumber'))
-    print(packageNum_list)
-    waybillNo_Pool[waybillNo_Pool["包号"].isin(packageNum_list)]
+    packageNum_check(packageNum_list)
+    waybillNo_Pool = waybillNo_Pool[waybillNo_Pool["包号"].isin(packageNum_list)]
     return waybillNo_Pool
 
 '''
@@ -156,12 +138,12 @@ def send_Requests():
     pass
 
 if __name__ == '__main__':
+    time_now_stamp = int(time.time())
+    stamp = time_now_stamp - 9600
     while True:
-        # get_time_now()
-        startDates = "2022-07-15 22:31:54"
-        endDates = "2022-07-15 22:31:56"
-        yfwd(startDates,endDates)
-        # print(waybillNo_Pool)
-        # data_wash(waybillNoPool)
+        startDates = time_module(stamp)
+        endDates = time_module(stamp + 1200)
+        not_actually_arrived(startDates,endDates)
         print(">>>>>>Waiting Now!<<<<<<")
-        time.sleep(12000)
+        stamp += 1201
+        time.sleep(1200)
