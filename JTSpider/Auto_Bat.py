@@ -143,14 +143,11 @@ def send_Requests():
     pass
 
 if __name__ == '__main__':
-    stamp = int(time.time()) - 5400
+    stamp = int(time.time()) - 6900
     while True:
         startDates = time_module(stamp)
-        endDates = time_module(stamp + 1200)
-        print(startDates,endDates)
-        # startDates = "2022-07-16 00:28:00"
-        # endDates = "2022-07-16 00:29:00"
-        # not_actually_arrived(startDates,endDates)
-        stamp += endDates + 1
-        print(">>>>>>Waiting Now!<<<<<<")
-        time.sleep(1200)
+        endDates = time_module(stamp + 600)
+        not_actually_arrived(startDates,endDates)
+        stamp += 601
+        print("-"*50)
+        time.sleep(600)
