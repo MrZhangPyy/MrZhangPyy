@@ -42,7 +42,7 @@ def time_module(i):
     return Dates
 
 '''
-*Package number checker and filter;(Temporary abandoned.)
+*Package number checker and filter;
 '''
 def packageNum_check(packageNum_list):
     global waybillNo_Pool
