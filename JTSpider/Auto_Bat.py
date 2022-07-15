@@ -153,11 +153,11 @@ def send_Requests():
 if __name__ == '__main__':
     stamp = int(time.time()) - 6900
     while True:
-        startDates = "2022-07-16 00:50:00"
-        endDates = "2022-07-16 00:55:00"
-        # startDates = time_module(stamp)
-        # endDates = time_module(stamp + 1200)
-        # print(startDates,"\n",endDates)
+        # startDates = "2022-07-16 00:50:00"
+        # endDates = "2022-07-16 00:55:00"
+        startDates = time_module(stamp)
+        endDates = time_module(stamp + 1200)
+        print(startDates,"\n",endDates)
         not_actually_arrived(startDates,endDates)
         stamp += 1201
         data_wash(waybillNo_List)
