@@ -129,10 +129,19 @@ def data_wash(waybillNo_List):
             billNoTemp.dropna(subset=['belongNo'], inplace=True)
             billNoSum = pd.concat([billNoSum, billNoTemp])
         billNoFinal = pd.concat([billNoFinal, billNoSum])
-    #
-    print(billNoFinal)
+    billNoFinal['scanDate'] = pd.to_datetime(billNoFinal['scanDate'])
+    billNoFinal.sort_values('scanDate',ascending=False,inplace=True)
+    billNoFinal.drop_duplicates(subset="billNo",keep='first',inplace=True)
+    billNoFinal = billNoFinal[billNoFinal["inputDept"].isin(["鄂州葛店集散点"])]
+    billNoFinal = billNoFinal[billNoFinal["scanType"].isin(["到件扫描","卸车扫描"])]
+    billNoFinal.drop(['belongNo', 'scanType', 'scanDate', 'inputDept'], axis=1, inplace=True)
+    billNoFinal.rename(columns={'billNo':'运单号'},inplace=True)
+    billNoFinal.insert(billNoFinal.shape[1], '操作类型', "转运")
+    billNoFinal.insert(billNoFinal.shape[1], '问题件一级类型', "有发未到件")
+    billNoFinal.insert(billNoFinal.shape[1], '问题件二级类型', "有发未到件a")
+    billNoFinal.insert(billNoFinal.shape[1], '问题件原因', "此件为包内件，路由显示发往我司，但实际并未到达！")
     billNoFinal.to_excel("TEST.xlsx", index=False)
-    print(">>>>>>Finished!<<<<<<")
+    print("-" * 45, "Finished!", "-" * 44)
     return billNoFinal
 
 '''
@@ -144,13 +153,13 @@ def send_Requests():
 if __name__ == '__main__':
     stamp = int(time.time()) - 6900
     while True:
-        # startDates = "2022-07-16 00:50:00"
-        # endDates = "2022-07-16 00:55:00"
-        startDates = time_module(stamp)
-        endDates = time_module(stamp + 1200)
+        startDates = "2022-07-16 00:50:00"
+        endDates = "2022-07-16 00:55:00"
+        # startDates = time_module(stamp)
+        # endDates = time_module(stamp + 1200)
         # print(startDates,"\n",endDates)
         not_actually_arrived(startDates,endDates)
         stamp += 1201
         data_wash(waybillNo_List)
-        print("-"*100)
+        print("-" * 45, "Waiting!", "-" * 45, "\nRunning in 20 minutes......")
         time.sleep(1200)
