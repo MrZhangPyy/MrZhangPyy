@@ -47,13 +47,13 @@ def time_module(i):
 def packageNum_check(packageNum_list):
     routename = 'electronicPackagePrinting'
     headers_generator(routename)
-    data = {"current":1,"size":100,"startCreateTime":"2022-07-15 00:00:00","endCreateTime":"2022-07-15 23:59:59",
+    data = {"current":1,"size":1000,"startCreateTime":"2022-07-15 00:00:00","endCreateTime":"2022-07-15 23:59:59",
      "createNetworkCode":"0711002","packageNumberList":packageNum_list,"countryId":"1"}
     response = requests.post('https://jmsgw.jtexpress.com.cn/customerother/electronicpackagelist/page',
                              headers=headers,json=data).json()
     response = response['data']['records']
     for dic in response:
-        if dic.get('packageCode') == "501" and (dic.get('createNetworkCode') == "502701B1" or dic.get('createNetworkCode') == "502701"):
+        if dic.get('packageCode') == "501" and dic.get('createNetworkCode') in ["502701B1","502701"]:
             pass
         else:packageNum_list.remove(dic.get('packageNumber'))
     return packageNum_list
@@ -81,16 +81,21 @@ def not_actually_arrived(startDates,endDates):
         response = response['data']['records']
         for dic in tqdm(response):
             if dic.get('packageNumber') is None:
-                break
-            temp_dic['运单号'] = dic.get('billCode')
-            temp_dic['包号'] = dic.get('packageNumber')
-            waybillNo_Pool.append(copy.deepcopy(temp_dic))
-            if dic.get('packageNumber') in packageNum_list:
                 pass
-            else:packageNum_list.append(dic.get('packageNumber'))
+            elif dic.get('packageNumber')[0] == "B":
+                temp_dic['运单号'] = dic.get('billCode')
+                temp_dic['包号'] = dic.get('packageNumber')
+                waybillNo_Pool.append(copy.deepcopy(temp_dic))
+                if dic.get('packageNumber') in packageNum_list:
+                    pass
+                else:packageNum_list.append(dic.get('packageNumber'))
+    print(waybillNo_Pool)
+    print(packageNum_list)
     waybillNo_Pool = pd.DataFrame(waybillNo_Pool)
     packageNum_check(packageNum_list)
+    print(packageNum_list)
     waybillNo_Pool = waybillNo_Pool[waybillNo_Pool["包号"].isin(packageNum_list)]
+    print(waybillNo_Pool)
     return waybillNo_Pool
 
 '''
@@ -138,12 +143,14 @@ def send_Requests():
     pass
 
 if __name__ == '__main__':
-    time_now_stamp = int(time.time())
-    stamp = time_now_stamp - 9600
+    stamp = int(time.time()) - 5400
     while True:
         startDates = time_module(stamp)
         endDates = time_module(stamp + 1200)
-        not_actually_arrived(startDates,endDates)
+        print(startDates,endDates)
+        # startDates = "2022-07-16 00:28:00"
+        # endDates = "2022-07-16 00:29:00"
+        # not_actually_arrived(startDates,endDates)
+        stamp += endDates + 1
         print(">>>>>>Waiting Now!<<<<<<")
-        stamp += 1201
         time.sleep(1200)
