@@ -163,3 +163,4 @@ if __name__ == '__main__':
         data_wash(waybillNo_List)
         print("-" * 45, "Waiting!", "-" * 45, "\nRunning in 20 minutes......")
         time.sleep(1200)
+
