@@ -5,7 +5,6 @@ from tqdm import tqdm
 import time
 from datetime import datetime
 import copy
-from rich import print
 
 '''
 *Headers generator;
@@ -158,10 +157,9 @@ if __name__ == '__main__':
         # endDates = "2022-07-16 00:55:00"
         startDates = time_module(stamp)
         endDates = time_module(stamp + 1200)
-        print(startDates,endDates)
+        print(startDates,endDates,sep="--")
         not_actually_arrived(startDates,endDates)
         stamp += 1201
         data_wash(waybillNo_List)
         print("-" * 45, "Waiting!", "-" * 45, "\nRunning in 20 minutes......")
         time.sleep(1200)
-
