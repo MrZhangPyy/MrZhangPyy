@@ -7,32 +7,11 @@ from datetime import datetime
 import copy
 from rich import print
 
-def Print():
-    jtspider = r'''
-     ██╗████████╗              ███████╗██████╗ ██╗██████╗ ███████╗██████╗ 
-     ██║╚══██╔══╝              ██╔════╝██╔══██╗██║██╔══██╗██╔════╝██╔══██╗
-     ██║   ██║       █████╗    ███████╗██████╔╝██║██║  ██║█████╗  ██████╔╝
-██   ██║   ██║       ╚════╝    ╚════██║██╔═══╝ ██║██║  ██║██╔══╝  ██╔══██╗
-╚█████╔╝   ██║                 ███████║██║     ██║██████╔╝███████╗██║  ██║
- ╚════╝    ╚═╝                 ╚══════╝╚═╝     ╚═╝╚═════╝ ╚══════╝╚═╝  ╚═╝
-                                                                          '''
-    print(jtspider)
-
-    version = r'''
-██╗   ██╗               ██╗            ██████╗ 
-██║   ██║              ███║           ██╔═████╗
-██║   ██║    █████╗    ╚██║           ██║██╔██║
-╚██╗ ██╔╝    ╚════╝     ██║           ████╔╝██║
- ╚████╔╝                ██║    ██╗    ╚██████╔╝
-  ╚═══╝                 ╚═╝    ╚═╝     ╚═════╝ 
-                                               '''
-    print(version)
-
 '''
 *Headers generator;
 '''
 def headers_generator(routename):
-    authtoken = 'a80863fcd74c4768ab3d51949aa2ed43'
+    authtoken = '207a8600b2b243b58c5ba4882c336a9d'
     global headers
     headers = {
         'authority': 'jmsgw.jtexpress.com.cn',
@@ -173,14 +152,13 @@ def send_Requests():
     pass
 
 if __name__ == '__main__':
-    Print()
     stamp = int(time.time()) - 6900
     while True:
         # startDates = "2022-07-16 00:50:00"
         # endDates = "2022-07-16 00:55:00"
         startDates = time_module(stamp)
         endDates = time_module(stamp + 1200)
-        print(startDates,"\n",endDates)
+        print(startDates,endDates)
         not_actually_arrived(startDates,endDates)
         stamp += 1201
         data_wash(waybillNo_List)
