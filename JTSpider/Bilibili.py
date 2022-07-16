@@ -26,3 +26,4 @@ for page in range(1,41):
     )
     response = requests.get('https://api.bilibili.com/x/relation/followings', headers=headers, params=params)
     print(response.text)
+
