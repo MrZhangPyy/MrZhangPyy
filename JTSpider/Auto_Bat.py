@@ -9,8 +9,7 @@ import copy
 '''
 *Headers generator;
 '''
-def headers_generator(routename):
-    authtoken = '207a8600b2b243b58c5ba4882c336a9d'
+def headers_generator(authtoken = "",routename = ""):
     global headers
     headers = {
         'authority': 'jmsgw.jtexpress.com.cn',
@@ -29,7 +28,7 @@ def headers_generator(routename):
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
     }
     return headers
 
@@ -44,11 +43,11 @@ def time_module(i):
 '''
 *Package number checker and filter;
 '''
-def packageNum_check(packageNum_list):
+def packageNum_check(authtoken = "",packageNum_list = []):
     global waybillNo_Pool
     if len(packageNum_list) > 0:
         routename = 'electronicPackagePrinting'
-        headers_generator(routename)
+        headers_generator(authtoken,routename)
         data = {"current":1,"size":1000,"startCreateTime":"2022-07-15 00:00:00","endCreateTime":"2022-07-15 23:59:59",
          "createNetworkCode":"0711002","packageNumberList":packageNum_list,"countryId":"1"}
         response = requests.post('https://jmsgw.jtexpress.com.cn/customerother/electronicpackagelist/page',
@@ -65,9 +64,9 @@ def packageNum_check(packageNum_list):
 '''
 *Constuct bill code pool from system to be further handling;
 '''
-def not_actually_arrived(startDates,endDates):
+def not_actually_arrived(startDates = "",endDates = ""):
     routename = 'newArriveMonitor'
-    headers_generator(routename)
+    headers_generator(authtoken,routename)
     temp_dic = {}
     packageNum_list = []
     global waybillNo_Pool,waybillNo_List
@@ -101,9 +100,9 @@ def not_actually_arrived(startDates,endDates):
 '''
 *Data wash and save to xlsx file;
 '''
-def data_wash(waybillNo_List):
+def data_wash(waybillNo_List = []):
     routename = 'scanQueryConstantlyNew'
-    headers_generator(routename)
+    headers_generator(authtoken,routename)
     count = (len(waybillNo_List) - 1) // 200 + 1
     billNoFinal = pd.DataFrame()
     for i in range(count):
@@ -149,19 +148,48 @@ def data_wash(waybillNo_List):
 '''
 *Send xlsx file via requests.post to server.
 '''
-def send_Requests():
-    pass
+def send_Requests(authtoken = "",file_path =""):
+    headers = {
+            'authority': 'jmsgw.jtexpress.com.cn',
+            'accept': 'application/json, text/plain, */*',
+            'accept-language': 'zh-CN,zh;q=0.9',
+            'authtoken': authtoken,
+            'cache-control': 'max-age=2, must-revalidate',
+            'lang': 'zh_CN',
+            'origin': 'https://jms.jtexpress.com.cn',
+            'referer': 'https://jms.jtexpress.com.cn/',
+            'routename': 'batchProblem',
+            'sec-ch-ua': '^\\^.Not/A)Brand^\\^;v=^\\^99^\\^, ^\\^Google',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '^\\^Windows^\\^',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-site',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
+        }
+    payload = """------WebKitFormBoundaryS9oPPAFn1ng8pW13
+                 Content-Disposition: form-data; name="uploadFile"; filename="有发未到模板.xlsx"
+                 Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+                 ------WebKitFormBoundaryS9oPPAFn1ng8pW13--"""
+    data = {
+        "uploadFile" : open(file_path,"rb")
+    }
+    url = "https://jmsgw.jtexpress.com.cn/servicequality/problemPiece/import"
+    res = requests.post(url,headers = headers,files=data).json()
+    print(res['msg'])
 
 if __name__ == '__main__':
+    authtoken = '207a8600b2b243b58c5ba4882c336a9d'
     stamp = int(time.time()) - 6900
     while True:
-        startDates = "2022-07-16 10:00:00"
-        endDates = "2022-07-16 11:00:00"
+        startDates = "2022-07-16 10:16:00"
+        endDates = "2022-07-16 10:17:00"
         # startDates = time_module(stamp)
         # endDates = time_module(stamp + 1200)
-        # print(startDates,endDates,sep="--")
+        print(startDates,endDates,sep="--")
         not_actually_arrived(startDates,endDates)
         stamp += 1201
         data_wash(waybillNo_List)
-        print("-" * 45, "Waiting!", "-" * 45, "\nNext run starting in 20 minutes......")
+        # send_Requests(authtoken,"./有发未到模板.xlsx")
+        print("-" * 17, "Waiting!", "-" * 17, "\nNext run starting soon in 20 minutes......")
         time.sleep(1200)
