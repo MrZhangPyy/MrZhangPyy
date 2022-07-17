@@ -44,6 +44,7 @@ def time_module(i):
 *Package number checker and filter;
 '''
 def packageNum_check(authtoken = "",packageNum_list = []):
+    print("Package number check...")
     global waybillNo_Pool
     if len(packageNum_list) > 0:
         routename = 'electronicPackagePrinting'
@@ -59,12 +60,15 @@ def packageNum_check(authtoken = "",packageNum_list = []):
             else:packageNum_list.remove(dic.get('packageNumber'))
         waybillNo_Pool = waybillNo_Pool[waybillNo_Pool["包号"].isin(packageNum_list)]
     else:pass
+    print("Package number check finished...")
     return waybillNo_Pool
 
 '''
 *Constuct bill code pool from system to be further handling;
 '''
 def not_actually_arrived(startDates = "",endDates = ""):
+    print("开始时间：{}，结束时间：{}.".format(startDates,endDates))
+    print("Gathering data...")
     routename = 'newArriveMonitor'
     headers_generator(authtoken,routename)
     temp_dic = {}
@@ -93,6 +97,7 @@ def not_actually_arrived(startDates = "",endDates = ""):
                     pass
                 else:packageNum_list.append(dic.get('packageNumber'))
     waybillNo_Pool = pd.DataFrame(waybillNo_Pool)
+    print("Gathering data finished...")
     packageNum_check(packageNum_list)
     waybillNo_List = waybillNo_Pool['运单号'].tolist()
     return waybillNo_List
@@ -101,11 +106,13 @@ def not_actually_arrived(startDates = "",endDates = ""):
 *Data wash and save to xlsx file;
 '''
 def data_wash(waybillNo_List = []):
+    print("Data washing...")
     routename = 'scanQueryConstantlyNew'
     headers_generator(authtoken,routename)
     count = (len(waybillNo_List) - 1) // 200 + 1
+    global billNoFinal
     billNoFinal = pd.DataFrame()
-    for i in range(count):
+    for i in tqdm(range(count)):
         ifrom = i * 200
         ito = ifrom + 200
         pre_data = {"current": 1, "size": 1000, "startDates": "2022-07-13 00:00:00", "endDates": "2022-07-13 23:59:59",
@@ -140,15 +147,16 @@ def data_wash(waybillNo_List = []):
         billNoFinal.insert(billNoFinal.shape[1], '问题件一级类型', "有发未到件")
         billNoFinal.insert(billNoFinal.shape[1], '问题件二级类型', "有发未到件a")
         billNoFinal.insert(billNoFinal.shape[1], '问题件原因', "此件为包内件，路由显示发往我司，但实际并未到达！")
-        billNoFinal.to_excel("有发未到模板.xlsx", index=False)
-        print("-" * 45, "Finished!", "-" * 44)
     else:print("无待处理数据！")
+    print("Data washing finished...")
     return
 
 '''
 *Send xlsx file via requests.post to server.
 '''
 def send_Requests(authtoken = "",file_path =""):
+    print("Sending requests to server...")
+    billNoFinal.to_excel("有发未到模板.xlsx", index=False)
     headers = {
             'authority': 'jmsgw.jtexpress.com.cn',
             'accept': 'application/json, text/plain, */*',
@@ -176,20 +184,21 @@ def send_Requests(authtoken = "",file_path =""):
     }
     url = "https://jmsgw.jtexpress.com.cn/servicequality/problemPiece/import"
     res = requests.post(url,headers = headers,files=data).json()
-    print(res['msg'])
+    print("Sending requests to server finished...")
+    print("Final result:",res['msg'])
 
 if __name__ == '__main__':
-    authtoken = '207a8600b2b243b58c5ba4882c336a9d'
+    authtoken = ''
     stamp = int(time.time()) - 6900
     while True:
-        startDates = "2022-07-16 10:16:00"
-        endDates = "2022-07-16 10:17:00"
+        startDates = "2022-07-17 10:00:00"
+        endDates = "2022-07-17 11:40:00"
         # startDates = time_module(stamp)
         # endDates = time_module(stamp + 1200)
-        print(startDates,endDates,sep="--")
         not_actually_arrived(startDates,endDates)
+        print(len(waybillNo_List))
         stamp += 1201
         data_wash(waybillNo_List)
         # send_Requests(authtoken,"./有发未到模板.xlsx")
-        print("-" * 17, "Waiting!", "-" * 17, "\nNext run starting soon in 20 minutes......")
+        print("ALL DONE !")
         time.sleep(1200)
