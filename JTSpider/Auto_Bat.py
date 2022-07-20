@@ -43,22 +43,23 @@ def time_module(i):
 '''
 *Package number checker and filter;
 '''
-def packageNum_check(authtoken = "",packageNum_list = []):
+def packageNum_check(packageNum_List = []):
     print("Package number check...")
     global waybillNo_Pool
-    if len(packageNum_list) > 0:
+    if len(packageNum_List) > 0:
         routename = 'electronicPackagePrinting'
         headers_generator(authtoken,routename)
         data = {"current":1,"size":1000,"startCreateTime":"2022-07-15 00:00:00","endCreateTime":"2022-07-15 23:59:59",
-         "createNetworkCode":"0711002","packageNumberList":packageNum_list,"countryId":"1"}
+         "createNetworkCode":"0711002","packageNumberList":packageNum_List,"countryId":"1"}
         response = requests.post('https://jmsgw.jtexpress.com.cn/customerother/electronicpackagelist/page',
                                  headers=headers,json=data).json()
         response = response['data']['records']
+        print(response)
         for dic in response:
-            if dic.get('packageCode') == "501" and dic.get('createNetworkCode') in ["502701B1","502701"]:
-                pass
-            else:packageNum_list.remove(dic.get('packageNumber'))
-        waybillNo_Pool = waybillNo_Pool[waybillNo_Pool["包号"].isin(packageNum_list)]
+            if not (dic.get('packageCode') == "501" and (dic.get('createNetworkCode') == "502701B1" or dic.get('createNetworkCode') == "502701")):
+                packageNum_List.remove(dic.get('packageNumber'))
+            else:pass
+        waybillNo_Pool = waybillNo_Pool[waybillNo_Pool["包号"].isin(packageNum_List)]
     else:pass
     print("Package number check finished...")
     return waybillNo_Pool
@@ -72,7 +73,7 @@ def not_actually_arrived(startDates = "",endDates = ""):
     routename = 'newArriveMonitor'
     headers_generator(authtoken,routename)
     temp_dic = {}
-    packageNum_list = []
+    packageNum_List = []
     global waybillNo_Pool,waybillNo_List
     waybillNo_Pool = []
     pre_data = {"current":1,"size":1000,"startDates":startDates,"endDates":endDates,"siteCode":"0711002",
@@ -80,25 +81,29 @@ def not_actually_arrived(startDates = "",endDates = ""):
     first_req = requests.post('https://jmsgw.jtexpress.com.cn/bigdataoperatingplatform/arriveMonitor/listDetail',
                               headers=headers, json=pre_data).json()
     max_pages = first_req['data']['pages'] + 1
-    for pages in range(1, max_pages):
+    for pages in tqdm(range(1, max_pages)):
         data = {"current":pages,"size":1000,"startDates":startDates,"endDates":endDates,"siteCode":"0711002",
                 "exportType":6,"type":6,"countryId":"1"}
         response = requests.post('https://jmsgw.jtexpress.com.cn/bigdataoperatingplatform/arriveMonitor/listDetail',
                                  headers=headers, json=data).json()
         response = response['data']['records']
-        for dic in tqdm(response):
+        for dic in response:
             if dic.get('packageNumber') is None:
                 pass
             elif dic.get('packageNumber')[0] == "B":
                 temp_dic['运单号'] = dic.get('billCode')
                 temp_dic['包号'] = dic.get('packageNumber')
                 waybillNo_Pool.append(copy.deepcopy(temp_dic))
-                if dic.get('packageNumber') in packageNum_list:
+                if dic.get('packageNumber') in packageNum_List:
                     pass
-                else:packageNum_list.append(dic.get('packageNumber'))
+                else:packageNum_List.append(dic.get('packageNumber'))
     waybillNo_Pool = pd.DataFrame(waybillNo_Pool)
+    print(waybillNo_Pool)
+    print(packageNum_List)
     print("Gathering data finished...")
-    packageNum_check(packageNum_list)
+    packageNum_check(packageNum_List)
+    print(waybillNo_Pool)
+    print(packageNum_List)
     waybillNo_List = waybillNo_Pool['运单号'].tolist()
     return waybillNo_List
 
@@ -188,17 +193,16 @@ def send_Requests(authtoken = "",file_path =""):
     print("Final result:",res['msg'])
 
 if __name__ == '__main__':
-    authtoken = ''
+    authtoken = '93983eaf46a34ee49d85132398109ee4'
     stamp = int(time.time()) - 6900
     while True:
-        startDates = "2022-07-17 10:00:00"
-        endDates = "2022-07-17 11:40:00"
+        startDates = "2022-07-20 17:08:00"
+        endDates = "2022-07-20 17:10:00"
         # startDates = time_module(stamp)
         # endDates = time_module(stamp + 1200)
+        # stamp += 1201
         not_actually_arrived(startDates,endDates)
-        print(len(waybillNo_List))
-        stamp += 1201
         data_wash(waybillNo_List)
         # send_Requests(authtoken,"./有发未到模板.xlsx")
-        print("ALL DONE !")
+        print("ALL DONE ! Next operation coming soon......")
         time.sleep(1200)
