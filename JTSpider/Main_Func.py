@@ -276,9 +276,7 @@ def send_Requests(authtoken = "",file_path =""):
                  Content-Disposition: form-data; name="uploadFile"; filename="有发未到模板.xlsx"
                  Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
                  ------WebKitFormBoundaryS9oPPAFn1ng8pW13--"""
-    data = {
-        "uploadFile" : open(file_path,"rb")
-    }
+    data = {"uploadFile" : open(file_path,"rb")}
     url = "https://jmsgw.jtexpress.com.cn/servicequality/problemPiece/import"
     res = requests.post(url,headers = headers,files=data).json()
     print("Sending requests to server finished...")
@@ -287,7 +285,7 @@ def send_Requests(authtoken = "",file_path =""):
 if __name__ == '__main__':
     authtoken = '2c70ab6ae3f7404385ec64cfb28eb9bf'
     while True:
-        print('请输入需要使用的功能编号：\n1.错分数据导出&自动分析；\n2.自动有发未到；\n(输入“#”以退出！)')
+        print('请输入需要使用的功能编号：\n1.自动有发未到；\n2.错分数据导出&自动分析；\n(输入“#”以退出！)')
         in_put = input(">>>")
         if in_put == "1":
             stamp = int(time.time()) - 6900
