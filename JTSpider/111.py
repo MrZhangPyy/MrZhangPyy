@@ -1,5 +1,6 @@
 import requests
-
+shipmentNo = ""
+result_dic = {}
 headers = {
     'authority': 'jmsgw.jtexpress.com.cn',
     'accept': 'application/json, text/plain, */*',
@@ -20,7 +21,8 @@ headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
 }
 
-params = (('shipmentNo', 'ZXJB22097668440'),)
+params = (('shipmentNo', shipmentNo),)
 
 response = requests.get('https://jmsgw.jtexpress.com.cn/transportation/tmsBranchTrackingDetail/loading/scan/list', headers=headers, params=params).json()
-print(response["data"][0]["scanWaybillNum"])
+result_dic["运输单号"] = shipmentNo
+result_dic["装载票数"] = response["data"][0]["scanWaybillNum"]
