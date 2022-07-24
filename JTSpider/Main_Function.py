@@ -406,7 +406,7 @@ def send_Requests(authtoken="", file_path=""):
 
 
 if __name__ == '__main__':
-    authtoken = 'f96135b8a2d643ae8da327a4c925c192'  # Put validated token here.
+    authtoken = ''  # Put validated token here.
     while True:
         print('请输入需要使用的功能编号：\n\n1.自动有发未到；\n\n2.错分数据导出 & 自动分析；\n\n3.车辆信息导出；\n\n(输入“#”以退出！)')
         in_put = input(">>>")
