@@ -34,7 +34,7 @@ def headers_generator(authtoken="", routename=""):
     return headers
 
 
-def vehicle_info(Start, End):
+def vehicle_info(Start = "", End = ""):
     '''
     *Vehicle infomation export;
     '''
@@ -138,7 +138,7 @@ def fetch_wrong():
     Gathering wrong dispatch raw data;
     '''
     print("Gathering wrong dispatch raw data...")
-    date = input("请输入日期：\neg：2022-07-22")
+    date = input("请输入日期：\n(eg：2022-07-22)\n")
     startTime = date + " 00:00:00"
     endTime = date + " 23:59:59"
     data = {"current": 1,
@@ -154,12 +154,22 @@ def fetch_wrong():
             "countryCode": "CN",
             "countryId": "1"
             }
+    routename = 'problemPieceQueryCenter'
+    headers_generator(authtoken, routename)
     response = requests.post('https://jmsgw.jtexpress.com.cn/servicequality/problemPiece/monitorPage', headers=headers,
                              json=data).json()
+    response = response['data']['records']
+    global raw_list
+    raw_list = []
+    for dic in response:
+        if dic.get('waybillNo') not in raw_list:
+            raw_list.append(copy.deepcopy(dic.get('waybillNo')))
+        else:
+            pass
     print("Gathering wrong dispatch raw data finished...")
 
 
-def wrong_dispatch(单号池=[]):
+def wrong_dispatch(raw_list=[]):
     '''
     Wrong dispatch raw data further operating;
     '''
@@ -167,7 +177,7 @@ def wrong_dispatch(单号池=[]):
     routename = "trackingExpress"
     headers_generator(authtoken, routename)
     list_result = []
-    for waybillNo in raw_List:
+    for waybillNo in raw_list:
         data = {"waybillNo": waybillNo, "countryId": "1"}
         response = requests.post('https://jmsgw.jtexpress.com.cn/operatingplatform/order/getOrderDetail',
                                  headers=headers, json=data).json()
@@ -415,11 +425,11 @@ if __name__ == '__main__':
                 time.sleep(1200)
         elif in_put == "2":
             fetch_wrong()
-            wrong_dispatch()
+            # wrong_dispatch()
             pass
         elif in_put == "3":
             vehicle_info("2022-07-23", "2022-07-24")
         elif in_put.strip() == "#":
-            pass
+            break
         else:
-            pass
+            print("请输入正确的编号！")
