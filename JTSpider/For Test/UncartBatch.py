@@ -4,7 +4,7 @@ import xlsxwriter as xw
 import time
 import pandas as pd
 from tqdm import tqdm
-from HeadersGenerator import generator
+
 
 def pre_request(headers, shipmentNo, page):
     params = {"current": page,"size": 1000,"shipmentNo": shipmentNo,"scanNetworkCode": "502701B1"}
