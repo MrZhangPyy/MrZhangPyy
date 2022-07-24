@@ -1,7 +1,5 @@
 # Hey there :wave:
 
-<img src="https://github.com/MrZhangPyy/MrZhangPyy/blob/main/Resources/banner.png?raw=true" alt="Hello world">
-
 <p align="center"> 
   Visitor count<br>
   <img src="https://profile-counter.glitch.me/MrZhangPyy/count.svg" />
