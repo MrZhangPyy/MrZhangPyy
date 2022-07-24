@@ -34,6 +34,105 @@ def headers_generator(authtoken="", routename=""):
     return headers
 
 
+def vehicle_info(Start, End):
+    '''
+    *Vehicle infomation export;
+    '''
+    headers1 = headers_generator(authtoken, 'brancTaskTrackSearch')
+    headers2 = headers_generator(authtoken, 'brancTaskTrackSearchView')
+    headers3 = headers_generator(authtoken, 'monitoringSearch')
+    headers4 = headers_generator(authtoken, 'monitoringSearchView')
+    load_type = {"current": 1, "size": 100, "startDepartureTime": Start + " 10:00:00",
+                 "endDepartureTime": End + " 10:00:00", "startActualDepartureTime": Start + " 10:00:00",
+                 "endActualDepartureTime": End + " 10:00:00", "startCode": "0711002", "shipmentState": 4,
+                 "countryId": "1"}
+    unload_type = {"current": 1, "size": 100, "startDepartureTime": Start + " 10:00:00",
+                   "endDepartureTime": End + " 10:00:00", "startActualDepartureTime": Start + " 10:00:00",
+                   "endActualDepartureTime": End + " 10:00:00", "endCode": "0711002", "shipmentState": 4,
+                   "countryId": "1"}
+    response1 = requests.post('https://jmsgw.jtexpress.com.cn/transportation/tmsBranchTrackingDetail/page',
+                              headers=headers,
+                              json=load).json()
+    response1 = response1["data"]["records"]
+    list_ = []
+    for dic in tqdm(response1):
+        dic_new = {}
+        dic_new["运输单号"] = dic["shipmentNo"]
+        dic_new["始发转运"] = dic["startName"]
+        dic_new["目的网点"] = dic["endName"]
+        dic_new["线路方式"] = dic["startName"] + "-" + dic["endName"]
+        dic_new["计划发车时间"] = dic["plannedDepartureTime"]
+        dic_new["实际发车时间"] = dic["actualDepartureTime"]
+        dic_new["车牌号"] = dic["plateNumber"]
+        params = (('shipmentNo', dic["shipmentNo"]),)
+        response2 = requests.get(
+            'https://jmsgw.jtexpress.com.cn/transportation/tmsBranchTrackingDetail/loading/scan/list',
+            headers=headers2, params=params).json()
+        dic_new["装载票数"] = response2["data"][0]["scanWaybillNum"]
+        dic_new["车型"] = dic["actualVehicleTypegroup"]
+        list_.append(copy.deepcopy(dic_new))
+
+    response3 = requests.post('https://jmsgw.jtexpress.com.cn/transportation/tmsBranchTrackingDetail/page',
+                              headers=headers,
+                              json=unload).json()
+    response3 = response3["data"]["records"]
+    list2_ = []
+    for dic in tqdm(response3):
+        dic_new = {}
+        dic_new["运输单号"] = dic["shipmentNo"]
+        dic_new["始发转运"] = dic["startName"]
+        dic_new["目的网点"] = dic["endName"]
+        dic_new["线路方式"] = dic["startName"] + "-" + dic["endName"]
+        dic_new["计划到车"] = dic["plannedArrivalTime"]
+        dic_new["实际到车"] = dic["actualArrivalTime"]
+        dic_new["车牌号"] = dic["plateNumber"]
+        params2 = (('shipmentNo', dic["shipmentNo"]),)
+        response4 = requests.get(
+            'https://jmsgw.jtexpress.com.cn/transportation/tmsBranchTrackingDetail/loading/scan/list',
+            headers=headers2, params=params2).json()
+        dic_new["装载票数"] = response4["data"][0]["scanWaybillNum"]
+        dic_new["车型"] = dic["actualVehicleTypegroup"]
+        list2_.append(copy.deepcopy(dic_new))
+
+    params3 = (
+        ('current', '1'),
+        ('size', '20'),
+        ('startDateTime', '2022-07-23 10:00:00'),
+        ('endDateTime', '2022-07-24 10:00:00'),
+        ('gradeList', ''),
+        ('searchType', 'manage'),
+    )
+    response5 = requests.get('https://jmsgw.jtexpress.com.cn/transportation/tmsShipment/page', headers=headers3,
+                             params=params3).json()
+    response5 = response5["data"]["records"]
+    list3_ = []
+    for dic in tqdm(response5):
+        dic_new = {}
+        dic_new["运输单号"] = dic["shipmentNo"]
+        dic_new["始发转运"] = dic["startName"]
+        dic_new["目的地"] = dic["endName"]
+        dic_new["线路方式"] = dic["shipmentName"]
+        dic_new["计划发车"] = dic["plannedDepartureTime"]
+        dic_new["实际发车"] = dic["actualDepartureTime"]
+        dic_new["车牌号"] = dic["plateNumber"]
+        params4 = (('shipmentNo', dic["shipmentNo"]),)
+        response6 = requests.get('https://jmsgw.jtexpress.com.cn/transportation/trackingDeatil/loading/scan/list',
+                                 headers=headers4, params=params4).json()
+        response6 = response6["data"]
+        for dic2 in response6:
+            if dic2.get("loadingTypeName") == "装车扫描":
+                dic_new["装载票数"] = dic2["scanWaybillNum"]
+        dic_new["车型"] = dic["vehicleTypegroup"]
+        list3_.append(copy.deepcopy(dic_new))
+
+    list_ = pd.DataFrame(list_)
+    list_.to_excel("离场.xlsx", index=False)
+    list2_ = pd.DataFrame(list2_)
+    list2_.to_excel("进场.xlsx", index=False)
+    list3_ = pd.DataFrame(list3_)
+    list3_.to_excel("干线.xlsx", index=False)
+
+
 def fetch_wrong():
     '''
     Gathering wrong dispatch raw data;
@@ -297,9 +396,9 @@ def send_Requests(authtoken="", file_path=""):
 
 
 if __name__ == '__main__':
-    authtoken = '2c70ab6ae3f7404385ec64cfb28eb9bf'
+    authtoken = 'f96135b8a2d643ae8da327a4c925c192'
     while True:
-        print('请输入需要使用的功能编号：\n1.自动有发未到；\n2.错分数据导出&自动分析；\n(输入“#”以退出！)')
+        print('请输入需要使用的功能编号：\n1.自动有发未到；\n2.错分数据导出&自动分析；\n3.车辆信息导出。\n(输入“#”以退出！)')
         in_put = input(">>>")
         if in_put == "1":
             stamp = int(time.time()) - 6900
@@ -318,5 +417,9 @@ if __name__ == '__main__':
             fetch_wrong()
             wrong_dispatch()
             pass
+        elif in_put == "3":
+            vehicle_info("2022-07-23", "2022-07-24")
         elif in_put.strip() == "#":
+            pass
+        else:
             pass
