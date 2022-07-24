@@ -34,7 +34,7 @@ def headers_generator(authtoken="", routename=""):
     return headers
 
 
-def vehicle_info(Start = "", End = ""):
+def vehicle_info(Start="", End=""):
     '''
     *Vehicle infomation export;
     '''
@@ -137,10 +137,10 @@ def fetch_wrong():
     '''
     Gathering wrong dispatch raw data;
     '''
-    print("Gathering wrong dispatch raw data...")
     date = input("请输入日期：\n(eg：2022-07-22)\n")
     startTime = date + " 00:00:00"
     endTime = date + " 23:59:59"
+    print("Gathering wrong dispatch raw data...")
     data = {"current": 1,
             "size": 500,
             "receiveNetworkId": 20024,
@@ -406,9 +406,9 @@ def send_Requests(authtoken="", file_path=""):
 
 
 if __name__ == '__main__':
-    authtoken = 'f96135b8a2d643ae8da327a4c925c192'
+    authtoken = 'f96135b8a2d643ae8da327a4c925c192'  # Put validated token here.
     while True:
-        print('请输入需要使用的功能编号：\n1.自动有发未到；\n2.错分数据导出&自动分析；\n3.车辆信息导出。\n(输入“#”以退出！)')
+        print('请输入需要使用的功能编号：\n\n1.自动有发未到；\n\n2.错分数据导出 & 自动分析；\n\n3.车辆信息导出；\n\n(输入“#”以退出！)')
         in_put = input(">>>")
         if in_put == "1":
             stamp = int(time.time()) - 6900
